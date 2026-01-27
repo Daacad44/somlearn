@@ -52,9 +52,10 @@ export async function generatePresentationContent(options: GenerationOptions): P
             }
 
             console.warn(`Model ${model} not found, trying fallback...`);
-        } catch (error: any) {
+        } catch (error: unknown) {
+            const err = error as { message?: string; status?: number };
             // Check for 404 in the error message or status if fetch itself failed before response.json()
-            if (error.message?.includes('404') || error.status === 404) {
+            if (err.message?.includes('404') || err.status === 404) {
                 console.warn(`Model ${model} failed with 404, trying fallback...`);
                 continue;
             }
@@ -69,13 +70,23 @@ export async function generatePresentationContent(options: GenerationOptions): P
 /**
  * Shared data processing logic
  */
-function processAIData(data: any, topic: string): PresentationData {
+interface GeminiResponse {
+    candidates?: Array<{
+        content?: {
+            parts?: Array<{
+                text?: string;
+            }>;
+        };
+    }>;
+}
+
+function processAIData(data: GeminiResponse, topic: string): PresentationData {
     const generatedText = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
-    let content;
+    let content: { slides?: Array<{ title?: string; content?: string[]; image_prompt?: string; icon?: string }> };
 
     try {
         content = JSON.parse(generatedText);
-    } catch (e) {
+    } catch {
         const jsonMatch = generatedText.match(/\{[\s\S]*\}/);
         if (!jsonMatch) {
             throw new Error('AI produced invalid content format. Please try a different topic.');
@@ -85,7 +96,7 @@ function processAIData(data: any, topic: string): PresentationData {
 
     return {
         topic: topic,
-        slides: (content.slides || []).map((slide: any) => ({
+        slides: (content.slides || []).map((slide: { title?: string; content?: string[]; image_prompt?: string; icon?: string }) => ({
             id: crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).substring(2),
             title: slide.title || 'Untitled Slide',
             content: slide.content || [],
@@ -154,10 +165,12 @@ export function getIconForSlide(title: string): string {
     return '📌';
 }
 
+import type { ImageResult } from './imageService';
+
 /**
  * Enhance slides with real images using professional search terms
  */
-export async function enhanceSlidesWithImages(slides: Slide[], searchImages: (query: string) => Promise<any[]>): Promise<Slide[]> {
+export async function enhanceSlidesWithImages(slides: Slide[], searchImages: (query: string) => Promise<ImageResult[]>): Promise<Slide[]> {
     return Promise.all(
         slides.map(async (slide) => {
             try {

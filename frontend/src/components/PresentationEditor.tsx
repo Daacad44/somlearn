@@ -1,9 +1,11 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import type { Presentation, Slide } from '../types/index';
-import { ChevronLeft, ChevronRight, Download, FileDown, Image as ImageIcon, Check, Save, Trash2 } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Download, FileDown, Image as ImageIcon, Check, Save, Trash2, Search, X, Loader2 } from 'lucide-react';
 import pptxgen from "pptxgenjs";
 import { exportToPDF } from '../services/pdfService';
 import { storageService } from '../services/storageService';
+import { searchImages } from '../services/imageService';
+import type { ImageResult } from '../services/imageService';
 
 interface Props {
     data: Presentation;
@@ -15,9 +17,24 @@ export default function PresentationEditor({ data, onBack }: Props) {
     const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
     const [isExporting, setIsExporting] = useState(false);
     const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
+    const [isSearchingImage, setIsSearchingImage] = useState(false);
+    const [searchQuery, setSearchQuery] = useState(data.topic);
+    const [searchResults, setSearchResults] = useState<ImageResult[]>([]);
+    const [isSearching, setIsSearching] = useState(false);
     const printRef = useRef<HTMLDivElement>(null);
 
     const currentSlide = slides[currentSlideIndex];
+
+    const handleSave = useCallback(() => {
+        setSaveStatus('saving');
+        storageService.savePresentation({
+            ...data,
+            slides,
+            updatedAt: new Date().toISOString()
+        });
+        setTimeout(() => setSaveStatus('saved'), 500);
+        setTimeout(() => setSaveStatus('idle'), 3000);
+    }, [data, slides]);
 
     // Auto-save logic
     useEffect(() => {
@@ -27,18 +44,7 @@ export default function PresentationEditor({ data, onBack }: Props) {
             }, 2000);
             return () => clearTimeout(timer);
         }
-    }, [slides]);
-
-    const handleSave = () => {
-        setSaveStatus('saving');
-        storageService.savePresentation({
-            ...data,
-            slides,
-            updatedAt: new Date().toISOString()
-        });
-        setTimeout(() => setSaveStatus('saved'), 500);
-        setTimeout(() => setSaveStatus('idle'), 3000);
-    };
+    }, [slides, saveStatus, handleSave]);
 
     const updateSlide = (index: number, updates: Partial<Slide>) => {
         const newSlides = [...slides];
@@ -113,6 +119,26 @@ export default function PresentationEditor({ data, onBack }: Props) {
         } finally {
             setIsExporting(false);
         }
+    };
+
+    const handleSearch = async (e?: React.FormEvent) => {
+        if (e) e.preventDefault();
+        if (!searchQuery.trim()) return;
+
+        setIsSearching(true);
+        try {
+            const results = await searchImages(searchQuery, 12);
+            setSearchResults(results);
+        } catch (error) {
+            console.error('Search failed:', error);
+        } finally {
+            setIsSearching(false);
+        }
+    };
+
+    const selectImage = (img: ImageResult) => {
+        updateSlide(currentSlideIndex, { image_url: img.url });
+        setIsSearchingImage(false);
     };
 
     return (
@@ -197,6 +223,7 @@ export default function PresentationEditor({ data, onBack }: Props) {
                             index={currentSlideIndex}
                             isPrint={false}
                             onUpdate={(updates) => updateSlide(currentSlideIndex, updates)}
+                            onSearchImage={() => setIsSearchingImage(true)}
                         />
                     </div>
 
@@ -211,16 +238,81 @@ export default function PresentationEditor({ data, onBack }: Props) {
                     </div>
                 </div>
             </div>
+
+            {/* Media Picker Modal */}
+            {isSearchingImage && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-300">
+                    <div className="bg-white w-full max-w-4xl max-h-[85vh] rounded-[32px] shadow-2xl overflow-hidden flex flex-col animate-in zoom-in-95 duration-300 border border-white/20">
+                        <div className="p-8 border-b flex items-center justify-between bg-slate-50/50">
+                            <div>
+                                <h3 className="text-2xl font-black tracking-tight text-slate-900">Visual Assets</h3>
+                                <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1">Source: Unsplash & Pexels Professional Library</p>
+                            </div>
+                            <button onClick={() => setIsSearchingImage(false)} className="p-3 hover:bg-slate-100 rounded-full transition-all hover:rotate-90"><X size={20} /></button>
+                        </div>
+
+                        <div className="p-8 flex-1 overflow-y-auto custom-scrollbar">
+                            <form onSubmit={handleSearch} className="relative mb-10 group">
+                                <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-amber-500 transition-colors" size={24} />
+                                <input
+                                    autoFocus
+                                    type="text"
+                                    className="w-full text-xl pl-16 pr-6 py-6 bg-slate-100 border-none rounded-2xl focus:ring-4 focus:ring-amber-500/10 transition-all font-bold placeholder:text-slate-300"
+                                    placeholder="Search professional imagery..."
+                                    value={searchQuery}
+                                    onChange={(e) => setSearchQuery(e.target.value)}
+                                />
+                                <button
+                                    type="submit"
+                                    className="absolute right-4 top-1/2 -translate-y-1/2 bg-slate-900 text-white px-6 py-3 rounded-xl text-sm font-black uppercase tracking-widest hover:bg-amber-500 transition-all"
+                                >
+                                    Search
+                                </button>
+                            </form>
+
+                            {isSearching ? (
+                                <div className="h-64 flex flex-col items-center justify-center gap-4">
+                                    <Loader2 className="text-amber-500 animate-spin" size={48} />
+                                    <p className="font-black text-slate-400 uppercase text-xs tracking-[0.2em]">Curating Visuals...</p>
+                                </div>
+                            ) : (
+                                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                                    {searchResults.length > 0 ? searchResults.map((img: ImageResult, i: number) => (
+                                        <div
+                                            key={i}
+                                            onClick={() => selectImage(img)}
+                                            className="group relative aspect-video rounded-xl overflow-hidden cursor-pointer bg-slate-100 hover:ring-4 ring-amber-500/30 transition-all shadow-md hover:shadow-xl"
+                                        >
+                                            <img src={img.thumbnail} alt={img.photographer} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
+                                            <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-end p-3">
+                                                <p className="text-[8px] font-black text-white uppercase tracking-widest truncate">By {img.photographer}</p>
+                                            </div>
+                                        </div>
+                                    )) : (
+                                        <div className="col-span-full py-20 text-center">
+                                            <div className="w-16 h-16 bg-slate-50 rounded-2xl flex items-center justify-center mx-auto mb-4 border border-slate-100">
+                                                <Search className="text-slate-300" size={32} />
+                                            </div>
+                                            <p className="text-slate-400 font-bold">Search for topics like "{data.topic}"</p>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
 
-function SlideRenderer({ slide, index, isPrint, onUpdate, ...props }: {
+function SlideRenderer({ slide, index, isPrint, onUpdate, onSearchImage, ...props }: {
     slide: Slide;
     index: number;
     isPrint: boolean;
     onUpdate?: (updates: Partial<Slide>) => void;
-    [key: string]: any;
+    onSearchImage?: () => void;
+    [key: string]: unknown;
 }) {
     return (
         <div className="w-full h-full bg-[#0F172A] text-white relative flex flex-col overflow-hidden" {...props}>
@@ -302,6 +394,7 @@ function SlideRenderer({ slide, index, isPrint, onUpdate, ...props }: {
                                             <Trash2 size={20} />
                                         </button>
                                         <button
+                                            onClick={onSearchImage}
                                             className="p-3 bg-amber-500 text-white rounded-full hover:bg-amber-600 transition-all shadow-xl"
                                             title="Change Image"
                                         >
@@ -317,7 +410,10 @@ function SlideRenderer({ slide, index, isPrint, onUpdate, ...props }: {
                                 </div>
                                 <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest leading-relaxed">Add Professional Visualization</p>
                                 {onUpdate && !isPrint && (
-                                    <button className="mt-4 px-6 py-2 bg-amber-500/10 hover:bg-amber-500/20 text-amber-500 rounded-lg text-xs font-black transition-all">
+                                    <button
+                                        onClick={onSearchImage}
+                                        className="mt-4 px-6 py-2 bg-amber-500/10 hover:bg-amber-500/20 text-amber-500 rounded-lg text-xs font-black transition-all"
+                                    >
                                         SELECT MEDIA
                                     </button>
                                 )}
@@ -331,7 +427,7 @@ function SlideRenderer({ slide, index, isPrint, onUpdate, ...props }: {
             <div className="px-16 lg:px-24 py-8 flex justify-between items-center text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 border-t border-white/5 bg-slate-950/40 relative z-20">
                 <div className="flex items-center gap-4">
                     <div className="w-4 h-4 rounded bg-amber-500 flex items-center justify-center text-[8px] text-navy-950 font-black">S</div>
-                    <span className="opacity-60">Somlearn Learning Deck // Basic Computer Hardware</span>
+                    <span className="opacity-60">Somlearn Learning Deck // {slide.title}</span>
                 </div>
                 <div className="flex items-center gap-4">
                     <span className="text-slate-800 tracking-[1em]">|</span>

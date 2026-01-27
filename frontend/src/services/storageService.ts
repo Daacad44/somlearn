@@ -16,7 +16,7 @@ export const storageService = {
         }
 
         localStorage.setItem(STORAGE_KEY, JSON.stringify(presentations));
-        storageService.updateAnalytics(presentation.slides.length);
+        storageService.updateAnalytics();
     },
 
     // Get all presentations
@@ -61,7 +61,7 @@ export const storageService = {
         localStorage.setItem(ANALYTICS_KEY, JSON.stringify(stats));
     },
 
-    updateAnalytics: (_slidesCount: number): void => {
+    updateAnalytics: (): void => {
         // This can be expanded for more complex tracking
     }
 };

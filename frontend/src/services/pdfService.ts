@@ -7,7 +7,7 @@ import { storageService } from './storageService';
  * Enterprise PDF Export Service
  * Optimized for high-resolution text rendering and font embedding.
  */
-export async function exportToPDF(data: PresentationData | any, slideElements: HTMLElement[]): Promise<void> {
+export async function exportToPDF(data: PresentationData, slideElements: HTMLElement[]): Promise<void> {
     const pdf = new jsPDF({
         orientation: 'landscape',
         unit: 'px',

@@ -61,9 +61,10 @@ export default function Dashboard() {
             setMyPresentations(storageService.getAllPresentations());
             setAnalytics(storageService.getAnalytics());
             setGeneratedData(newPresentation);
-        } catch (error: any) {
+        } catch (error: unknown) {
             console.error('Generation Failed:', error);
-            const errorMsg = error.message || "Unknown error";
+            const err = error as { message?: string };
+            const errorMsg = err.message || "Unknown error";
             alert(`AI Architect encountered an issue: ${errorMsg}\n\nPlease verify your API key and try again.`);
         } finally {
             setIsGenerating(false);

@@ -31,7 +31,7 @@ export async function searchUnsplashImages(query: string, count: number = 1): Pr
             }
         });
 
-        return response.data.results.map((photo: any) => ({
+        return response.data.results.map((photo: { urls: { regular: string; thumb: string }; user: { name: string } }) => ({
             url: photo.urls.regular,
             thumbnail: photo.urls.thumb,
             photographer: photo.user.name,
@@ -64,7 +64,7 @@ export async function searchPexelsImages(query: string, count: number = 1): Prom
             }
         });
 
-        return response.data.photos.map((photo: any) => ({
+        return response.data.photos.map((photo: { src: { large: string; medium: string }; photographer: string }) => ({
             url: photo.src.large,
             thumbnail: photo.src.medium,
             photographer: photo.photographer,
