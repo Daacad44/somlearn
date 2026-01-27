@@ -24,8 +24,8 @@ export default function TemplatesPage({ onSelectTemplate, onBack }: Props) {
         <div className="min-h-screen bg-slate-50">
             {/* Header */}
             <header className="bg-white border-b border-gray-200 sticky top-0 z-20">
-                <div className="max-w-7xl mx-auto px-8 py-6">
-                    <div className="flex items-center justify-between mb-6">
+                <div className="max-w-7xl mx-auto px-4 lg:px-8 py-4 lg:py-6">
+                    <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-6">
                         <div className="flex items-center gap-4">
                             <button
                                 onClick={onBack}
@@ -34,34 +34,34 @@ export default function TemplatesPage({ onSelectTemplate, onBack }: Props) {
                                 <ArrowLeft size={20} className="text-gray-600" />
                             </button>
                             <div>
-                                <h1 className="text-3xl font-bold text-navy-900 font-display">Presentation Templates</h1>
-                                <p className="text-gray-500 mt-1">Choose a professional template to get started</p>
+                                <h1 className="text-2xl lg:text-3xl font-bold text-navy-900 font-display">Templates</h1>
+                                <p className="text-xs lg:text-sm text-gray-500 mt-1">Choose a professional starting point</p>
                             </div>
                         </div>
-                        <div className="flex items-center gap-2 px-4 py-2 bg-amber-50 border border-amber-200 rounded-lg">
-                            <Sparkles size={16} className="text-amber-600" />
-                            <span className="text-sm font-semibold text-amber-900">{templates.length} Templates Available</span>
+                        <div className="flex items-center gap-2 px-3 py-1.5 bg-amber-50 border border-amber-200 rounded-lg self-start">
+                            <Sparkles size={14} className="text-amber-600" />
+                            <span className="text-[10px] lg:text-sm font-semibold text-amber-900">{templates.length} Ready to Use</span>
                         </div>
                     </div>
 
                     {/* Search and Filter */}
-                    <div className="flex gap-4">
+                    <div className="flex flex-col sm:flex-row gap-3 lg:gap-4">
                         <div className="flex-1 relative">
-                            <Search size={20} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
+                            <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
                             <input
                                 type="text"
                                 placeholder="Search templates..."
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
-                                className="w-full pl-12 pr-4 py-3 rounded-xl border border-gray-200 focus:border-navy-500 focus:ring-2 focus:ring-navy-500/10 outline-none transition-all"
+                                className="w-full pl-12 pr-4 py-2.5 lg:py-3 rounded-xl border border-gray-200 focus:border-navy-500 focus:ring-2 focus:ring-navy-500/10 outline-none transition-all text-sm lg:text-base"
                             />
                         </div>
-                        <div className="flex items-center gap-2 px-4 py-3 bg-white border border-gray-200 rounded-xl">
-                            <Filter size={18} className="text-gray-500" />
+                        <div className="flex items-center gap-2 px-4 py-2.5 lg:py-3 bg-white border border-gray-200 rounded-xl">
+                            <Filter size={16} className="text-gray-500" />
                             <select
                                 value={selectedCategory}
                                 onChange={(e) => setSelectedCategory(e.target.value)}
-                                className="outline-none bg-transparent font-medium text-gray-700 cursor-pointer"
+                                className="outline-none bg-transparent font-medium text-gray-700 cursor-pointer text-sm lg:text-base"
                             >
                                 {categories.map(cat => (
                                     <option key={cat} value={cat}>{cat}</option>
@@ -73,7 +73,7 @@ export default function TemplatesPage({ onSelectTemplate, onBack }: Props) {
             </header>
 
             {/* Templates Grid */}
-            <div className="max-w-7xl mx-auto px-8 py-12">
+            <div className="max-w-7xl mx-auto px-4 lg:px-8 py-6 lg:py-12">
                 {filteredTemplates.length === 0 ? (
                     <div className="text-center py-20">
                         <div className="text-6xl mb-4">🔍</div>

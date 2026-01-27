@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import type { Presentation, Slide } from '../types/index';
-import { ChevronLeft, ChevronRight, Download, FileDown, Image as ImageIcon, Check, Save, Trash2, Search, X, Loader2 } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Download, FileDown, Image as ImageIcon, Check, Save, Trash2, Search, X, Loader2, Layout } from 'lucide-react';
 import pptxgen from "pptxgenjs";
 import { exportToPDF } from '../services/pdfService';
 import { storageService } from '../services/storageService';
@@ -21,6 +21,7 @@ export default function PresentationEditor({ data, onBack }: Props) {
     const [searchQuery, setSearchQuery] = useState(data.topic);
     const [searchResults, setSearchResults] = useState<ImageResult[]>([]);
     const [isSearching, setIsSearching] = useState(false);
+    const [isNavigatorOpen, setIsNavigatorOpen] = useState(false);
     const printRef = useRef<HTMLDivElement>(null);
 
     const currentSlide = slides[currentSlideIndex];
@@ -151,23 +152,22 @@ export default function PresentationEditor({ data, onBack }: Props) {
                 ))}
             </div>
 
-            {/* Modern Workspace Header */}
-            <div className="absolute top-0 left-0 right-0 h-14 bg-white/70 backdrop-blur-xl border-b flex items-center justify-between px-6 z-50">
-                <div className="flex items-center gap-6">
+            <div className="absolute top-0 left-0 right-0 h-14 bg-white/70 backdrop-blur-xl border-b flex items-center justify-between px-4 lg:px-6 z-50">
+                <div className="flex items-center gap-2 lg:gap-6">
                     <button onClick={onBack} className="p-2 hover:bg-slate-100 rounded-full transition-colors"><ChevronLeft size={18} /></button>
-                    <div className="h-4 w-[1px] bg-slate-200"></div>
+                    <div className="h-4 w-[1px] bg-slate-200 hidden lg:block"></div>
                     <div className="flex items-center gap-3">
-                        <span className="text-xs font-black uppercase tracking-widest text-slate-400">Project:</span>
-                        <span className="text-sm font-bold text-slate-900 truncate max-w-[300px]">{data.topic}</span>
+                        <span className="text-xs font-black uppercase tracking-widest text-slate-400 hidden sm:block">Project:</span>
+                        <span className="text-sm font-bold text-slate-900 truncate max-w-[120px] sm:max-w-[300px]">{data.topic}</span>
                     </div>
-                    <div className="flex items-center gap-2 px-3 py-1 bg-slate-50 border rounded-full">
+                    <div className="flex items-center gap-2 px-3 py-1 bg-slate-50 border rounded-full hidden md:flex">
                         {saveStatus === 'saving' ? (
                             <span className="flex items-center gap-2 text-[10px] font-bold text-amber-600 animate-pulse uppercase tracking-wider">
-                                <Save size={10} /> Saving changes...
+                                <Save size={10} /> Saving...
                             </span>
                         ) : saveStatus === 'saved' ? (
                             <span className="flex items-center gap-2 text-[10px] font-bold text-green-600 uppercase tracking-wider">
-                                <Check size={10} /> Saved to Local Sync
+                                <Check size={10} /> Sync
                             </span>
                         ) : (
                             <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Editor Active</span>
@@ -176,23 +176,36 @@ export default function PresentationEditor({ data, onBack }: Props) {
                 </div>
 
                 <div className="flex items-center gap-2">
-                    <button onClick={handleExportPPT} className="flex items-center gap-2 px-4 py-1.5 text-xs font-black uppercase tracking-wider bg-white border border-slate-200 hover:bg-slate-50 rounded-lg transition-all">
-                        <Download size={14} /> PPTX
+                    <button onClick={handleExportPPT} className="flex items-center gap-2 px-3 lg:px-4 py-1.5 text-[10px] lg:text-xs font-black uppercase tracking-wider bg-white border border-slate-200 hover:bg-slate-50 rounded-lg transition-all">
+                        <Download size={14} className="hidden lg:block" /> PPTX
                     </button>
-                    <button onClick={handleExportPDF} disabled={isExporting} className="flex items-center gap-2 px-4 py-1.5 text-xs font-black uppercase tracking-wider bg-slate-900 text-white hover:bg-slate-800 rounded-lg transition-all shadow-lg shadow-slate-900/10">
-                        <FileDown size={14} /> {isExporting ? 'Capturing...' : 'PDF'}
+                    <button onClick={handleExportPDF} disabled={isExporting} className="flex items-center gap-2 px-3 lg:px-4 py-1.5 text-[10px] lg:text-xs font-black uppercase tracking-wider bg-slate-900 text-white hover:bg-slate-800 rounded-lg transition-all shadow-lg shadow-slate-900/10">
+                        <FileDown size={14} className="hidden lg:block" /> {isExporting ? '...' : 'PDF'}
                     </button>
                 </div>
             </div>
 
-            <div className="flex flex-1 pt-14 w-full">
+            <div className="flex flex-1 pt-14 w-full relative">
+
+                {/* Mobile Navigator Overlay */}
+                {isNavigatorOpen && (
+                    <div
+                        className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-30 lg:hidden"
+                        onClick={() => setIsNavigatorOpen(false)}
+                    />
+                )}
+
                 {/* Modern Navigator */}
-                <div className="w-16 hover:w-64 bg-white border-r flex flex-col shrink-0 z-40 transition-all duration-300 group/nav overflow-hidden shadow-2xl shadow-slate-200/50">
+                <div className={`
+                    fixed inset-y-0 left-0 z-40 bg-white border-r flex flex-col shrink-0 transition-transform duration-300 lg:static lg:translate-x-0 lg:w-16 lg:hover:w-64
+                    ${isNavigatorOpen ? 'translate-x-0 w-64' : '-translate-x-full w-0 lg:w-16'}
+                    overflow-hidden shadow-2xl shadow-slate-200/50
+                `}>
                     <div className="flex-1 overflow-y-auto p-3 space-y-4 custom-scrollbar">
                         {slides.map((slide, idx) => (
                             <div
                                 key={slide.id}
-                                onClick={() => setCurrentSlideIndex(idx)}
+                                onClick={() => { setCurrentSlideIndex(idx); setIsNavigatorOpen(false); }}
                                 className={`relative cursor-pointer transition-all duration-300 ${currentSlideIndex === idx ? 'scale-100' : 'scale-95 opacity-50 hover:opacity-100'}`}
                             >
                                 <div className={`aspect-video rounded-lg border-2 overflow-hidden transition-all ${currentSlideIndex === idx ? 'border-amber-500 shadow-xl' : 'border-slate-100 hover:border-slate-300'}`}>
@@ -207,7 +220,7 @@ export default function PresentationEditor({ data, onBack }: Props) {
                                         Slide {idx + 1}
                                     </div>
                                 </div>
-                                <div className="absolute top-1/2 -left-3 -translate-y-1/2 p-2 bg-white hidden group-hover/nav:block border border-slate-100 rounded-full shadow-lg z-50">
+                                <div className="absolute top-1/2 -left-3 -translate-y-1/2 p-2 bg-white hidden lg:group-hover/nav:block border border-slate-100 rounded-full shadow-lg z-50">
                                     <span className="text-[10px] font-black text-slate-800">{idx + 1}</span>
                                 </div>
                             </div>
@@ -216,8 +229,8 @@ export default function PresentationEditor({ data, onBack }: Props) {
                 </div>
 
                 {/* Professional Canvas */}
-                <div className="flex-1 bg-[#F1F5F9] relative overflow-hidden flex flex-col items-center justify-center p-12">
-                    <div className="w-full max-w-6xl aspect-video shadow-[0_40px_100px_-20px_rgba(15,23,42,0.3)] rounded-2xl overflow-hidden ring-1 ring-black/5 animate-in zoom-in-95 duration-700">
+                <div className="flex-1 bg-[#F1F5F9] relative overflow-hidden flex flex-col items-center justify-center p-4 lg:p-12">
+                    <div className="w-full max-w-6xl aspect-video lg:aspect-video shadow-[0_20px_50px_-10px_rgba(15,23,42,0.2)] lg:shadow-[0_40px_100px_-20px_rgba(15,23,42,0.3)] rounded-xl lg:rounded-2xl overflow-hidden ring-1 ring-black/5 animate-in zoom-in-95 duration-700 bg-navy-950">
                         <SlideRenderer
                             slide={currentSlide}
                             index={currentSlideIndex}
@@ -228,11 +241,19 @@ export default function PresentationEditor({ data, onBack }: Props) {
                     </div>
 
                     {/* Quick Navigation Controls */}
-                    <div className="mt-8 flex items-center gap-6 px-8 py-3 bg-white/80 backdrop-blur rounded-full shadow-xl border border-white">
+                    <div className="mt-4 lg:mt-8 flex items-center gap-4 lg:gap-6 px-6 lg:px-8 py-2 lg:py-3 bg-white/80 backdrop-blur rounded-full shadow-xl border border-white">
+                        <button
+                            onClick={() => setIsNavigatorOpen(true)}
+                            className="lg:hidden p-2 hover:bg-slate-100 rounded-full text-slate-600"
+                            title="Show All Slides"
+                        >
+                            <Layout size={20} />
+                        </button>
+                        <div className="h-6 w-[1px] bg-slate-200 lg:hidden"></div>
                         <button onClick={() => setCurrentSlideIndex(Math.max(0, currentSlideIndex - 1))} disabled={currentSlideIndex === 0} className="p-2 hover:bg-slate-100 rounded-full disabled:opacity-30 transition-all hover:scale-110 active:scale-90"><ChevronLeft size={20} /></button>
-                        <div className="flex flex-col items-center min-w-[100px]">
-                            <span className="text-xs font-black uppercase tracking-tighter text-slate-400">Structure Insight</span>
-                            <span className="text-sm font-black text-slate-900">{currentSlideIndex + 1} / {slides.length}</span>
+                        <div className="flex flex-col items-center min-w-[80px] lg:min-w-[100px]">
+                            <span className="text-[8px] lg:text-xs font-black uppercase tracking-tighter text-slate-400">Structure Insight</span>
+                            <span className="text-xs lg:text-sm font-black text-slate-900">{currentSlideIndex + 1} / {slides.length}</span>
                         </div>
                         <button onClick={() => setCurrentSlideIndex(Math.min(slides.length - 1, currentSlideIndex + 1))} disabled={currentSlideIndex === slides.length - 1} className="p-2 hover:bg-slate-100 rounded-full disabled:opacity-30 transition-all hover:scale-110 active:scale-90"><ChevronRight size={20} /></button>
                     </div>
@@ -319,46 +340,46 @@ function SlideRenderer({ slide, index, isPrint, onUpdate, onSearchImage, ...prop
             {/* Background Decorative Accents */}
             <div className="absolute top-0 right-0 w-[45%] h-full bg-gradient-to-l from-slate-800/20 to-transparent pointer-events-none"></div>
             <div className="absolute bottom-0 right-0 w-80 h-80 bg-amber-500/5 rounded-full blur-[120px] pointer-events-none"></div>
-            <div className="absolute top-0 left-0 w-full h-1.5 bg-amber-500 shadow-[0_0_20px_rgba(245,158,11,0.5)] z-20"></div>
+            <div className="absolute top-0 left-0 w-full h-1 lg:h-1.5 bg-amber-500 shadow-[0_0_20px_rgba(245,158,11,0.5)] z-20"></div>
 
-            <div className="flex-1 p-16 lg:p-24 relative z-10 flex flex-col justify-center">
+            <div className="flex-1 p-6 lg:p-24 relative z-10 flex flex-col justify-center overflow-y-auto lg:overflow-hidden">
                 {/* Header Section */}
-                <div className="mb-10 lg:mb-16">
-                    <div className="flex items-center gap-6 mb-8">
-                        <div className="text-6xl lg:text-7xl select-none filter drop-shadow-lg">
+                <div className="mb-6 lg:mb-16">
+                    <div className="flex items-center gap-3 lg:gap-6 mb-4 lg:mb-8">
+                        <div className="text-4xl lg:text-7xl select-none filter drop-shadow-lg">
                             {onUpdate && !isPrint ? (
                                 <input
                                     value={slide.icon || '📌'}
                                     onChange={(e) => onUpdate({ icon: e.target.value })}
-                                    className="bg-transparent w-20 outline-none text-center cursor-edit"
+                                    className="bg-transparent w-12 lg:w-20 outline-none text-center cursor-edit"
                                     title="Click to edit emoji"
                                 />
                             ) : (
                                 <span>{slide.icon || '📌'}</span>
                             )}
                         </div>
-                        <div className="h-14 w-1.5 bg-amber-500 rounded-full"></div>
+                        <div className="h-8 lg:h-14 w-1 lg:w-1.5 bg-amber-500 rounded-full"></div>
                     </div>
 
                     {onUpdate && !isPrint ? (
                         <textarea
                             value={slide.title}
                             onChange={(e) => onUpdate({ title: e.target.value })}
-                            className="bg-transparent text-5xl lg:text-6xl font-black text-white w-full outline-none border-b-2 border-transparent focus:border-amber-500 transition-all px-0 resize-none leading-tight"
-                            rows={1}
+                            className="bg-transparent text-2xl lg:text-6xl font-black text-white w-full outline-none border-b-2 border-transparent focus:border-amber-500 transition-all px-0 resize-none leading-tight"
+                            rows={2}
                         />
                     ) : (
-                        <h2 className="text-5xl lg:text-6xl font-black text-white leading-tight tracking-tight max-w-4xl">{slide.title}</h2>
+                        <h2 className="text-2xl lg:text-6xl font-black text-white leading-tight tracking-tight max-w-4xl">{slide.title}</h2>
                     )}
                 </div>
 
-                {/* Content Grid - FIXED OVERLAP HERE */}
-                <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-20 items-center">
+                {/* Content Grid */}
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-20 items-center">
                     {/* Left Column: Bullets */}
-                    <div className="lg:col-span-7 space-y-6 lg:space-y-10">
+                    <div className="lg:col-span-7 space-y-4 lg:space-y-10">
                         {slide.content.map((point, i) => (
-                            <div key={i} className="flex gap-6 group">
-                                <div className="w-2 h-2 rounded-full bg-amber-500 mt-3.5 shrink-0 group-hover:scale-150 transition-transform"></div>
+                            <div key={i} className="flex gap-3 lg:gap-6 group">
+                                <div className="w-1.5 lg:w-2 h-1.5 lg:h-2 rounded-full bg-amber-500 mt-2 lg:mt-3.5 shrink-0 group-hover:scale-150 transition-transform"></div>
                                 {onUpdate && !isPrint ? (
                                     <textarea
                                         value={point}
@@ -367,52 +388,52 @@ function SlideRenderer({ slide, index, isPrint, onUpdate, onSearchImage, ...prop
                                             newContent[i] = e.target.value;
                                             onUpdate({ content: newContent });
                                         }}
-                                        className="bg-slate-800/20 hover:bg-slate-800/40 p-4 rounded-xl text-lg lg:text-xl font-medium text-slate-300 w-full outline-none resize-none border-l-4 border-transparent focus:border-amber-500 transition-all leading-relaxed"
+                                        className="bg-slate-800/20 hover:bg-slate-800/40 p-2 lg:p-4 rounded-xl text-sm lg:text-xl font-medium text-slate-300 w-full outline-none resize-none border-l-4 border-transparent focus:border-amber-500 transition-all leading-relaxed"
                                         rows={2}
                                     />
                                 ) : (
-                                    <p className="text-lg lg:text-xl font-medium text-slate-300 leading-relaxed">{point}</p>
+                                    <p className="text-sm lg:text-xl font-medium text-slate-300 leading-relaxed">{point}</p>
                                 )}
                             </div>
                         ))}
                     </div>
 
                     {/* Right Column: Media */}
-                    <div className="lg:col-span-5 aspect-video lg:aspect-[4/3] relative bg-slate-900/50 rounded-3xl overflow-hidden border border-white/10 flex items-center justify-center p-1 group/img shadow-3xl">
+                    <div className="lg:col-span-5 aspect-video lg:aspect-[4/3] relative bg-slate-900/50 rounded-2xl lg:rounded-3xl overflow-hidden border border-white/10 flex items-center justify-center p-1 group/img shadow-3xl">
                         <div className="absolute inset-0 bg-gradient-to-br from-amber-500/5 to-transparent pointer-events-none z-10"></div>
 
                         {slide.image_url ? (
                             <>
-                                <img src={slide.image_url} alt="Slide Visual" className="w-full h-full object-cover rounded-2xl group-hover/img:scale-105 transition-transform duration-1000" />
+                                <img src={slide.image_url} alt="Slide Visual" className="w-full h-full object-cover rounded-xl lg:rounded-2xl group-hover/img:scale-105 transition-transform duration-1000" />
                                 {onUpdate && !isPrint && (
                                     <div className="absolute inset-0 bg-black/60 opacity-0 group-hover/img:opacity-100 transition-opacity flex items-center justify-center gap-4 z-20">
                                         <button
                                             onClick={() => onUpdate({ image_url: undefined })}
-                                            className="p-3 bg-red-500 text-white rounded-full hover:bg-red-600 transition-all shadow-xl"
+                                            className="p-2 lg:p-3 bg-red-500 text-white rounded-full hover:bg-red-600 transition-all shadow-xl"
                                             title="Remove Image"
                                         >
-                                            <Trash2 size={20} />
+                                            <Trash2 size={20} className="w-4 h-4 lg:w-5 lg:h-5" />
                                         </button>
                                         <button
                                             onClick={onSearchImage}
-                                            className="p-3 bg-amber-500 text-white rounded-full hover:bg-amber-600 transition-all shadow-xl"
+                                            className="p-2 lg:p-3 bg-amber-500 text-white rounded-full hover:bg-amber-600 transition-all shadow-xl"
                                             title="Change Image"
                                         >
-                                            <ImageIcon size={20} />
+                                            <ImageIcon size={20} className="w-4 h-4 lg:w-5 lg:h-5" />
                                         </button>
                                     </div>
                                 )}
                             </>
                         ) : (
-                            <div className="text-center p-8">
-                                <div className="w-20 h-20 bg-slate-800 rounded-3xl flex items-center justify-center mx-auto mb-6 border border-white/5 shadow-inner">
-                                    <ImageIcon size={32} className="text-slate-600" />
+                            <div className="text-center p-4 lg:p-8">
+                                <div className="w-12 lg:w-20 h-12 lg:h-20 bg-slate-800 rounded-2xl lg:rounded-3xl flex items-center justify-center mx-auto mb-4 lg:mb-6 border border-white/5 shadow-inner">
+                                    <ImageIcon size={32} className="text-slate-600 w-5 h-5 lg:w-8 lg:h-8" />
                                 </div>
-                                <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest leading-relaxed">Add Professional Visualization</p>
+                                <p className="text-[8px] lg:text-[10px] font-black text-slate-500 uppercase tracking-widest leading-relaxed">Visual Insight</p>
                                 {onUpdate && !isPrint && (
                                     <button
                                         onClick={onSearchImage}
-                                        className="mt-4 px-6 py-2 bg-amber-500/10 hover:bg-amber-500/20 text-amber-500 rounded-lg text-xs font-black transition-all"
+                                        className="mt-2 lg:mt-4 px-4 lg:px-6 py-1 lg:py-2 bg-amber-500/10 hover:bg-amber-500/20 text-amber-500 rounded-lg text-[8px] lg:text-xs font-black transition-all"
                                     >
                                         SELECT MEDIA
                                     </button>
@@ -424,14 +445,14 @@ function SlideRenderer({ slide, index, isPrint, onUpdate, onSearchImage, ...prop
             </div>
 
             {/* Footer Accent */}
-            <div className="px-16 lg:px-24 py-8 flex justify-between items-center text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 border-t border-white/5 bg-slate-950/40 relative z-20">
-                <div className="flex items-center gap-4">
-                    <div className="w-4 h-4 rounded bg-amber-500 flex items-center justify-center text-[8px] text-navy-950 font-black">S</div>
-                    <span className="opacity-60">Somlearn Learning Deck // {slide.title}</span>
+            <div className="px-6 lg:px-24 py-4 lg:py-8 flex justify-between items-center text-[8px] lg:text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 border-t border-white/5 bg-slate-950/40 relative z-20">
+                <div className="flex items-center gap-2 lg:gap-4">
+                    <div className="w-3 lg:w-4 h-3 lg:h-4 rounded bg-amber-500 flex items-center justify-center text-[6px] lg:text-[8px] text-navy-950 font-black">S</div>
+                    <span className="opacity-60 truncate max-w-[150px] lg:max-w-none">Somlearn // {slide.title}</span>
                 </div>
                 <div className="flex items-center gap-4">
-                    <span className="text-slate-800 tracking-[1em]">|</span>
-                    <span className="text-amber-500">MODULE {index + 1}</span>
+                    <span className="text-slate-800 tracking-[0.5em] lg:tracking-[1em] hidden sm:inline">|</span>
+                    <span className="text-amber-500">MOD {index + 1}</span>
                 </div>
             </div>
         </div>

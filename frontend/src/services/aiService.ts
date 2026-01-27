@@ -19,9 +19,10 @@ export async function generatePresentationContent(options: GenerationOptions): P
     }
 
     const tryModels = [
+        'gemini-2.0-flash-exp', // Most capable latest model
+        'gemini-2.5-flash',     // User specified model
         'gemini-1.5-flash',
-        'gemini-flash-latest', // Fallback for newer accounts
-        'gemini-2.5-flash'
+        'gemini-flash-latest'
     ];
 
     for (const model of tryModels) {

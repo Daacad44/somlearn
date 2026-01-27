@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Layout, Play, FileText, Image as ImageIcon, BarChart, Trash2, ExternalLink, Plus, Clock, Search } from 'lucide-react';
+import { Layout, Play, FileText, Image as ImageIcon, BarChart, Trash2, ExternalLink, Plus, Clock, Search, Menu, X } from 'lucide-react';
 import PresentationEditor from './PresentationEditor';
 import GenerationOverlay from './GenerationOverlay';
 import TemplatesPage from './TemplatesPage';
@@ -19,6 +19,7 @@ export default function Dashboard() {
     const [myPresentations, setMyPresentations] = useState<Presentation[]>([]);
     const [analytics, setAnalytics] = useState<AnalyticsData | null>(null);
     const [selectedTemplate, setSelectedTemplate] = useState<Template | null>(null);
+    const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
     // Load initial data
     useEffect(() => {
@@ -92,22 +93,57 @@ export default function Dashboard() {
         <div className="flex h-screen bg-slate-50 font-sans text-slate-900 overflow-hidden">
             {isGenerating && <GenerationOverlay onComplete={handleGenerationComplete} />}
 
+            {/* Mobile Sidebar Overlay */}
+            {isSidebarOpen && (
+                <div
+                    className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-30 lg:hidden"
+                    onClick={() => setIsSidebarOpen(false)}
+                />
+            )}
+
             {/* Sidebar Navigation */}
-            <aside className="w-72 bg-[#0F172A] text-white flex flex-col shrink-0 relative overflow-hidden z-20 shadow-2xl">
-                <div className="p-8 relative z-10">
+            <aside className={`
+                fixed inset-y-0 left-0 z-40 w-72 bg-[#0F172A] text-white flex flex-col shrink-0 transition-transform duration-300 lg:static lg:translate-x-0
+                ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}
+                relative overflow-hidden shadow-2xl
+            `}>
+                <div className="p-8 relative z-10 flex items-center justify-between">
                     <h1 className="text-2xl font-black flex items-center gap-3 tracking-tighter">
                         <div className="w-9 h-9 rounded-lg bg-amber-500 flex items-center justify-center shadow-lg shadow-amber-500/20">
                             <span className="text-navy-950 text-xl font-black">S</span>
                         </div>
                         Somlearn
                     </h1>
+                    <button onClick={() => setIsSidebarOpen(false)} className="lg:hidden p-2 hover:bg-white/5 rounded-lg">
+                        <X size={20} />
+                    </button>
                 </div>
 
                 <nav className="flex-1 px-4 space-y-1 relative z-10">
-                    <NavItem icon={<Play size={18} />} label="New Deck" active={view === 'dashboard'} onClick={() => setView('dashboard')} />
-                    <NavItem icon={<FileText size={18} />} label="My Library" active={view === 'my-presentations'} onClick={() => setView('my-presentations')} />
-                    <NavItem icon={<ImageIcon size={18} />} label="Templates" active={view === 'templates'} onClick={() => setView('templates')} />
-                    <NavItem icon={<BarChart size={18} />} label="Analytics" active={view === 'analytics'} onClick={() => setView('analytics')} />
+                    <NavItem
+                        icon={<Play size={18} />}
+                        label="New Deck"
+                        active={view === 'dashboard'}
+                        onClick={() => { setView('dashboard'); setIsSidebarOpen(false); }}
+                    />
+                    <NavItem
+                        icon={<FileText size={18} />}
+                        label="My Library"
+                        active={view === 'my-presentations'}
+                        onClick={() => { setView('my-presentations'); setIsSidebarOpen(false); }}
+                    />
+                    <NavItem
+                        icon={<ImageIcon size={18} />}
+                        label="Templates"
+                        active={view === 'templates'}
+                        onClick={() => { setView('templates'); setIsSidebarOpen(false); }}
+                    />
+                    <NavItem
+                        icon={<BarChart size={18} />}
+                        label="Analytics"
+                        active={view === 'analytics'}
+                        onClick={() => { setView('analytics'); setIsSidebarOpen(false); }}
+                    />
                 </nav>
 
                 <div className="p-6 mt-auto border-t border-white/5 bg-navy-950/30">
@@ -123,32 +159,40 @@ export default function Dashboard() {
 
             {/* Main Content Area */}
             <main className="flex-1 overflow-auto flex flex-col relative">
-                <header className="h-16 flex items-center justify-between px-10 bg-white/80 backdrop-blur-md border-b sticky top-0 z-10">
-                    <h2 className="text-sm font-bold uppercase tracking-widest text-slate-400">
-                        {view === 'dashboard' ? 'Creation Lab' :
-                            view === 'my-presentations' ? 'Presentation Library' :
-                                view === 'analytics' ? 'Performance Insights' : 'Template Gallery'}
-                    </h2>
+                <header className="h-16 flex items-center justify-between px-6 lg:px-10 bg-white/80 backdrop-blur-md border-b sticky top-0 z-10">
+                    <div className="flex items-center gap-4">
+                        <button
+                            onClick={() => setIsSidebarOpen(true)}
+                            className="lg:hidden p-2 hover:bg-slate-100 rounded-lg text-slate-600"
+                        >
+                            <Menu size={24} />
+                        </button>
+                        <h2 className="text-xs lg:text-sm font-bold uppercase tracking-widest text-slate-400">
+                            {view === 'dashboard' ? 'Creation Lab' :
+                                view === 'my-presentations' ? 'Presentation Library' :
+                                    view === 'analytics' ? 'Performance Insights' : 'Template Gallery'}
+                        </h2>
+                    </div>
                     <div className="flex items-center gap-4">
                         <button className="text-xs font-bold bg-slate-900 text-white px-4 py-2 rounded-full hover:bg-slate-800 transition-all">Support</button>
                     </div>
                 </header>
 
-                <div className="p-10 max-w-6xl mx-auto w-full">
+                <div className="p-6 lg:p-10 max-w-6xl mx-auto w-full">
                     {view === 'dashboard' && (
                         <div className="animate-in fade-in duration-500">
-                            <div className="mb-12">
-                                <h2 className="text-4xl font-extrabold tracking-tight text-slate-900 mb-2">Transform ideas into slides.</h2>
-                                <p className="text-slate-500 text-lg">Input a topic and let our AI consultant handle the narrative.</p>
+                            <div className="mb-8 lg:mb-12">
+                                <h2 className="text-3xl lg:text-4xl font-extrabold tracking-tight text-slate-900 mb-2">Transform ideas into slides.</h2>
+                                <p className="text-slate-500 text-base lg:text-lg">Input a topic and let our AI consultant handle the narrative.</p>
                             </div>
 
-                            <div className="bg-white rounded-[32px] shadow-2xl shadow-slate-200/50 p-10 border border-slate-100">
+                            <div className="bg-white rounded-[24px] lg:rounded-[32px] shadow-2xl shadow-slate-200/50 p-6 lg:p-10 border border-slate-100">
                                 <div className="space-y-8">
                                     <div>
                                         <label className="text-[10px] font-black uppercase tracking-[0.2em] text-amber-600 block mb-4">Core Topic</label>
                                         <input
                                             type="text"
-                                            className="w-full text-2xl p-6 rounded-2xl bg-slate-50 border-none focus:ring-4 focus:ring-amber-500/10 outline-none placeholder:text-slate-300 font-bold text-slate-900"
+                                            className="w-full text-lg lg:text-2xl p-4 lg:p-6 rounded-2xl bg-slate-50 border-none focus:ring-4 focus:ring-amber-500/10 outline-none placeholder:text-slate-300 font-bold text-slate-900"
                                             placeholder="The impact of zero-knowledge proofs on privacy..."
                                             value={topic}
                                             onChange={(e) => setTopic(e.target.value)}
@@ -286,8 +330,8 @@ export default function Dashboard() {
                         </div>
                     )}
                 </div>
-            </main>
-        </div>
+            </main >
+        </div >
     );
 }
 

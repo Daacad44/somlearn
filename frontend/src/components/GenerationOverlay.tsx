@@ -33,15 +33,15 @@ export default function GenerationOverlay({ onComplete }: { onComplete: () => vo
             <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-amber-500/5 rounded-full blur-[150px] animate-pulse"></div>
             <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-blue-500/5 rounded-full blur-[150px] animate-pulse"></div>
 
-            <div className="w-full max-w-xl p-12 relative z-10">
-                <div className="mb-16 text-center">
-                    <div className="relative w-28 h-28 mx-auto mb-8 flex items-center justify-center">
+            <div className="w-full max-w-xl p-6 md:p-12 relative z-10">
+                <div className="mb-8 md:mb-16 text-center">
+                    <div className="relative w-20 h-20 md:w-28 md:h-28 mx-auto mb-6 md:mb-8 flex items-center justify-center">
                         <div className="absolute inset-0 border-t-2 border-amber-500 rounded-full animate-spin"></div>
                         <div className="absolute inset-4 border-r-2 border-slate-500 rounded-full animate-spin-reverse opacity-30"></div>
-                        <Sparkles className="text-amber-500 animate-pulse" size={40} />
+                        <Sparkles className="text-amber-500 animate-pulse w-8 h-8 md:w-10 md:h-10" size={40} />
                     </div>
-                    <h2 className="text-4xl font-black tracking-tighter mb-3">Orchestrating Intelligence</h2>
-                    <p className="text-slate-500 font-medium uppercase tracking-[0.3em] text-[10px]">Somlearn Architect // v2.1 Alpha</p>
+                    <h2 className="text-3xl md:text-4xl font-black tracking-tighter mb-3">Orchestrating Intelligence</h2>
+                    <p className="text-slate-500 font-medium uppercase tracking-[0.3em] text-[8px] md:text-[10px]">Somlearn Architect // v2.1 Alpha</p>
                 </div>
 
                 <div className="space-y-4">
