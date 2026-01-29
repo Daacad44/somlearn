@@ -177,7 +177,8 @@ export default function Dashboard() {
                         <h2 className="text-xs lg:text-sm font-bold uppercase tracking-widest text-slate-400">
                             {view === 'dashboard' ? 'Creation Lab' :
                                 view === 'my-presentations' ? 'Presentation Library' :
-                                    view === 'analytics' ? 'Performance Insights' : 'Template Gallery'}
+                                    view === 'analytics' ? 'Performance Insights' :
+                                        view === 'settings' ? 'Workspace Settings' : 'Template Gallery'}
                         </h2>
                     </div>
                     <div className="flex items-center gap-4">
