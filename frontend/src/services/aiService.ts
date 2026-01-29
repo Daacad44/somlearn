@@ -1,6 +1,8 @@
 import type { PresentationData, Slide } from '../types/index';
 
-const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY || '';
+const getGeminiApiKey = () => {
+    return import.meta.env.VITE_GEMINI_API_KEY || localStorage.getItem('somlearn_gemini_key') || '';
+};
 
 export interface GenerationOptions {
     topic: string;
@@ -14,7 +16,8 @@ export interface GenerationOptions {
  * Uses a Strategic Consulting Framework for high-quality, non-repetitive slides.
  */
 export async function generatePresentationContent(options: GenerationOptions): Promise<PresentationData> {
-    if (!GEMINI_API_KEY) {
+    const apiKey = getGeminiApiKey();
+    if (!apiKey) {
         throw new Error('Google Gemini API Key is missing.');
     }
 
@@ -28,7 +31,7 @@ export async function generatePresentationContent(options: GenerationOptions): P
     for (const model of tryModels) {
         try {
             const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`;
-            const response = await fetch(`${endpoint}?key=${GEMINI_API_KEY}`, {
+            const response = await fetch(`${endpoint}?key=${apiKey}`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({

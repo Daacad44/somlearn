@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Layout, Play, FileText, Image as ImageIcon, BarChart, Trash2, ExternalLink, Plus, Clock, Search, Menu, X } from 'lucide-react';
+import { Layout, Play, FileText, Image as ImageIcon, BarChart, Trash2, ExternalLink, Plus, Clock, Search, Menu, X, Settings, Key, Sparkles } from 'lucide-react';
 import PresentationEditor from './PresentationEditor';
 import GenerationOverlay from './GenerationOverlay';
 import TemplatesPage from './TemplatesPage';
@@ -7,7 +7,7 @@ import { storageService } from '../services/storageService';
 import type { Presentation, AnalyticsData } from '../types/index';
 import type { Template } from '../data/templates';
 
-type View = 'dashboard' | 'my-presentations' | 'analytics' | 'templates';
+type View = 'dashboard' | 'my-presentations' | 'analytics' | 'templates' | 'settings';
 
 export default function Dashboard() {
     const [view, setView] = useState<View>('dashboard');
@@ -20,6 +20,7 @@ export default function Dashboard() {
     const [analytics, setAnalytics] = useState<AnalyticsData | null>(null);
     const [selectedTemplate, setSelectedTemplate] = useState<Template | null>(null);
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+    const [userApiKey, setUserApiKey] = useState(localStorage.getItem('somlearn_gemini_key') || '');
 
     // Load initial data
     useEffect(() => {
@@ -144,6 +145,12 @@ export default function Dashboard() {
                         active={view === 'analytics'}
                         onClick={() => { setView('analytics'); setIsSidebarOpen(false); }}
                     />
+                    <NavItem
+                        icon={<Settings size={18} />}
+                        label="Settings"
+                        active={view === 'settings'}
+                        onClick={() => { setView('settings'); setIsSidebarOpen(false); }}
+                    />
                 </nav>
 
                 <div className="p-6 mt-auto border-t border-white/5 bg-navy-950/30">
@@ -263,7 +270,7 @@ export default function Dashboard() {
                                 </div>
                             ) : (
                                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                                    {myPresentations.map(pres => (
+                                    {myPresentations.map((pres: Presentation) => (
                                         <div
                                             key={pres.id}
                                             onClick={() => openPresentation(pres)}
@@ -327,6 +334,57 @@ export default function Dashboard() {
                     {view === 'templates' && (
                         <div className="animate-in slide-in-from-bottom-5 duration-500">
                             <TemplatesPage onSelectTemplate={(t) => { setSelectedTemplate(t); setView('dashboard'); }} onBack={() => setView('dashboard')} />
+                        </div>
+                    )}
+
+                    {view === 'settings' && (
+                        <div className="animate-in fade-in duration-500 max-w-2xl mx-auto">
+                            <div className="mb-10">
+                                <h3 className="text-3xl font-black tracking-tight mb-2">Architect Settings</h3>
+                                <p className="text-slate-500">Configure your professional workspace and AI credentials.</p>
+                            </div>
+
+                            <div className="bg-white rounded-[32px] p-8 lg:p-10 border border-slate-100 shadow-xl overflow-hidden relative">
+                                <div className="absolute top-0 right-0 w-32 h-32 bg-amber-500/5 rounded-full -translate-y-1/2 translate-x-1/2"></div>
+
+                                <div className="space-y-8 relative z-10">
+                                    <div>
+                                        <div className="flex items-center gap-2 mb-4">
+                                            <Key size={16} className="text-amber-500" />
+                                            <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Google Gemini API Key</label>
+                                        </div>
+                                        <input
+                                            type="password"
+                                            className="w-full text-lg p-4 rounded-xl bg-slate-50 border border-slate-100 focus:ring-4 focus:ring-amber-500/10 outline-none placeholder:text-slate-300 font-mono"
+                                            placeholder="Paste your AIzaSy... key here"
+                                            value={userApiKey}
+                                            onChange={(e) => setUserApiKey(e.target.value)}
+                                        />
+                                        <p className="mt-4 text-[11px] text-slate-400 leading-relaxed">
+                                            This key is stored <span className="text-navy-950 font-bold">locally in your browser</span> and is never sent to our servers. Missing an environment key? Paste your own to unlock the AI Architect.
+                                        </p>
+                                    </div>
+
+                                    <button
+                                        onClick={() => {
+                                            localStorage.setItem('somlearn_gemini_key', userApiKey);
+                                            alert('Configuration Synchronized! Your API key has been securely saved.');
+                                        }}
+                                        className="w-full py-4 bg-slate-900 text-white rounded-2xl font-black text-sm uppercase tracking-widest hover:bg-slate-800 transition-all shadow-lg"
+                                    >
+                                        Save Configuration
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div className="mt-12 p-8 rounded-[32px] bg-amber-50 border border-amber-100">
+                                <h4 className="text-sm font-black uppercase tracking-widest text-amber-900 mb-4 flex items-center gap-2">
+                                    <Sparkles size={16} /> Beta Notice
+                                </h4>
+                                <p className="text-xs text-amber-800/70 font-medium leading-loose">
+                                    You are using Somlearn v2.1 Alpha. All generations are currently optimized for Gemini 2.5 Flash. Professional templates and custom styles are automatically applied based on your selections.
+                                </p>
+                            </div>
                         </div>
                     )}
                 </div>

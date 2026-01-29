@@ -1,5 +1,6 @@
 import os
 import openai
+from typing import List
 from dotenv import load_dotenv
 from app.models.presentation import SlideContent
 
