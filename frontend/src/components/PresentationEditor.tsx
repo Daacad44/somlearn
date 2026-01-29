@@ -335,6 +335,12 @@ function SlideRenderer({ slide, index, isPrint, onUpdate, onSearchImage, ...prop
     onSearchImage?: () => void;
     [key: string]: unknown;
 }) {
+    const [imgError, setImgError] = useState(false);
+
+    useEffect(() => {
+        setImgError(false);
+    }, [slide.image_url]);
+
     return (
         <div className="w-full h-full bg-[#0F172A] text-white relative flex flex-col overflow-hidden" {...props}>
             {/* Background Decorative Accents */}
@@ -402,9 +408,14 @@ function SlideRenderer({ slide, index, isPrint, onUpdate, onSearchImage, ...prop
                     <div className="lg:col-span-5 aspect-video lg:aspect-[4/3] relative bg-slate-900/50 rounded-2xl lg:rounded-3xl overflow-hidden border border-white/10 flex items-center justify-center p-1 group/img shadow-3xl">
                         <div className="absolute inset-0 bg-gradient-to-br from-amber-500/5 to-transparent pointer-events-none z-10"></div>
 
-                        {slide.image_url ? (
+                        {slide.image_url && !imgError ? (
                             <>
-                                <img src={slide.image_url} alt="Slide Visual" className="w-full h-full object-cover rounded-xl lg:rounded-2xl group-hover/img:scale-105 transition-transform duration-1000" />
+                                <img
+                                    src={slide.image_url}
+                                    alt="Slide Visual"
+                                    className="w-full h-full object-cover rounded-xl lg:rounded-2xl group-hover/img:scale-105 transition-transform duration-1000"
+                                    onError={() => setImgError(true)}
+                                />
                                 {onUpdate && !isPrint && (
                                     <div className="absolute inset-0 bg-black/60 opacity-0 group-hover/img:opacity-100 transition-opacity flex items-center justify-center gap-4 z-20">
                                         <button
